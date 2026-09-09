@@ -55,55 +55,59 @@ function App() {
       </header>
 
       <form onSubmit={handleSubmit} className="analyze-form">
-        <div className="field">
-          <label>Resume</label>
-          <div className="mode-toggle">
-            <button
-              type="button"
-              className={resumeMode === "file" ? "active" : ""}
-              onClick={() => setResumeMode("file")}
-            >
-              Upload PDF
-            </button>
-            <button
-              type="button"
-              className={resumeMode === "text" ? "active" : ""}
-              onClick={() => setResumeMode("text")}
-            >
-              Paste text
-            </button>
+        <div className="form-grid">
+          <div className="field">
+            <label>Resume</label>
+            <div className="mode-toggle">
+              <button
+                type="button"
+                className={resumeMode === "file" ? "active" : ""}
+                onClick={() => setResumeMode("file")}
+              >
+                Upload PDF
+              </button>
+              <button
+                type="button"
+                className={resumeMode === "text" ? "active" : ""}
+                onClick={() => setResumeMode("text")}
+              >
+                Paste text
+              </button>
+            </div>
+
+            {resumeMode === "file" ? (
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setResumeFile(e.target.files[0] ?? null)}
+              />
+            ) : (
+              <textarea
+                rows={10}
+                placeholder="Paste your resume text here..."
+                value={resumeText}
+                onChange={(e) => setResumeText(e.target.value)}
+              />
+            )}
           </div>
 
-          {resumeMode === "file" ? (
-            <input
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => setResumeFile(e.target.files[0] ?? null)}
-            />
-          ) : (
+          <div className="field">
+            <label htmlFor="jd">Job Description</label>
             <textarea
+              id="jd"
               rows={10}
-              placeholder="Paste your resume text here..."
-              value={resumeText}
-              onChange={(e) => setResumeText(e.target.value)}
+              placeholder="Paste the target job description here..."
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
             />
-          )}
+          </div>
         </div>
 
-        <div className="field">
-          <label htmlFor="jd">Job Description</label>
-          <textarea
-            id="jd"
-            rows={10}
-            placeholder="Paste the target job description here..."
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-          />
+        <div className="submit-row">
+          <button type="submit" disabled={loading} className="submit-button">
+            {loading ? "Analyzing..." : "Generate Interview Questions"}
+          </button>
         </div>
-
-        <button type="submit" disabled={loading} className="submit-button">
-          {loading ? "Analyzing..." : "Generate Interview Questions"}
-        </button>
       </form>
 
       {error && <div className="error-banner">{error}</div>}

@@ -9,18 +9,24 @@ function ResultsPanel({ result }) {
 
       <div className="question-columns">
         <div className="question-column">
-          <h3>Technical (gap areas)</h3>
-          <ol>
+          <span className="column-badge technical">Technical — gap areas</span>
+          <ol className="question-list">
             {technical.map((q, i) => (
-              <li key={i}>{q.question}</li>
+              <li key={i}>
+                <span className="question-number">{i + 1}</span>
+                <span>{q.question}</span>
+              </li>
             ))}
           </ol>
         </div>
         <div className="question-column">
-          <h3>Behavioral (strengths)</h3>
-          <ol>
+          <span className="column-badge behavioral">Behavioral — strengths</span>
+          <ol className="question-list">
             {behavioral.map((q, i) => (
-              <li key={i}>{q.question}</li>
+              <li key={i}>
+                <span className="question-number">{i + 1}</span>
+                <span>{q.question}</span>
+              </li>
             ))}
           </ol>
         </div>
