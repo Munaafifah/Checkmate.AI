@@ -1,0 +1,123 @@
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  text-align: left;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.tagline {
+  margin: 0.25rem 0 0;
+  color: #666;
+}
+
+.analyze-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-weight: 600;
+}
+
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mode-toggle button {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f5f5f5;
+  cursor: pointer;
+}
+
+.mode-toggle button.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+textarea,
+input[type="file"] {
+  font: inherit;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.submit-button {
+  align-self: flex-start;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #2f6fed;
+  color: #fff;
+  cursor: pointer;
+}
+
+.submit-button:disabled {
+  background: #9bb6ef;
+  cursor: not-allowed;
+}
+
+.error-banner {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background: #fdecea;
+  color: #a12622;
+  border: 1px solid #f5c2be;
+}
+
+.results {
+  margin-top: 2.5rem;
+}
+
+.summary {
+  color: #333;
+  line-height: 1.5;
+}
+
+.question-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.question-column h3 {
+  margin-bottom: 0.75rem;
+}
+
+.question-column ol {
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+@media (max-width: 640px) {
+  .question-columns {
+    grid-template-columns: 1fr;
+  }
+}
