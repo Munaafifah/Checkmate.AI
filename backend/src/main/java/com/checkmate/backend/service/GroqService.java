@@ -1,6 +1,8 @@
 package com.checkmate.backend.service;
 
 import com.checkmate.backend.dto.AnalyzeResponse;
+import com.checkmate.backend.dto.FitScore;
+import com.checkmate.backend.dto.RequirementMatch;
 import com.checkmate.backend.exception.GroqApiException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,12 +22,19 @@ public class GroqService {
     private static final String SYSTEM_PROMPT = """
             You are an expert technical interviewer and career coach.
 
-            You will be given a candidate's resume text and a target job description. Do the following:
-            1. Identify the candidate's strongest matching areas (skills/experience that align well with the job description).
-            2. Identify the candidate's weakest gaps (job requirements not well evidenced in the resume).
-            3. Write a 2-4 sentence fit summary covering both.
-            4. Generate exactly 5 technical interview questions that probe the identified gaps.
-            5. Generate exactly 5 behavioral interview questions that explore the identified strengths.
+            You will be given a candidate's resume text and a target job description, and may also be
+            given a COMPUTED FIT SCORE section produced by an embedding-similarity model that has already
+            matched each job requirement against the resume. Do the following:
+            1. If a COMPUTED FIT SCORE section is present, treat it as ground truth: base the gaps on its
+               "weak or no evidence" requirements and the strengths on its "strong evidence" requirements,
+               rather than re-deriving them yourself from the raw text. Reference the numeric score in your
+               summary. If no such section is present, identify strengths and gaps yourself from the raw
+               resume and job description text.
+            2. Write a 2-4 sentence fit summary covering both the strengths and the gaps.
+            3. Generate exactly 5 technical interview questions that probe the identified gaps.
+            4. Generate exactly 5 behavioral interview questions that explore the identified strengths.
+            5. Use plain ASCII punctuation only (a hyphen "-" instead of an em dash, straight quotes
+               instead of curly ones) to avoid encoding artifacts in the rendered output.
 
             Respond with ONLY valid JSON matching this exact schema, no markdown code fences, no commentary:
             {
@@ -49,24 +58,56 @@ public class GroqService {
         this.model = model;
     }
 
-    public AnalyzeResponse generateQuestions(String resumeText, String jobDescription) {
-        String userPrompt = "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jobDescription;
+    public AnalyzeResponse generateQuestions(String resumeText, String jobDescription, FitScore fitScore) {
+        String userPrompt = "RESUME:\n" + resumeText + "\n\nJOB DESCRIPTION:\n" + jobDescription
+                + fitScoreSection(fitScore);
 
         String content = callGroq(userPrompt);
+        AnalyzeResponse llmResponse;
         try {
-            return objectMapper.readValue(content, AnalyzeResponse.class);
+            llmResponse = objectMapper.readValue(content, AnalyzeResponse.class);
         } catch (Exception firstFailure) {
             log.warn("Groq response was not valid JSON on first attempt, retrying with a stricter reminder");
             String retryPrompt = userPrompt +
                     "\n\nYour previous reply was not valid JSON. Reply with ONLY valid JSON, no markdown, no commentary.";
             String retryContent = callGroq(retryPrompt);
             try {
-                return objectMapper.readValue(retryContent, AnalyzeResponse.class);
+                llmResponse = objectMapper.readValue(retryContent, AnalyzeResponse.class);
             } catch (Exception secondFailure) {
                 throw new GroqApiException(
                         "The AI response could not be parsed. Please try again.", secondFailure);
             }
         }
+        return new AnalyzeResponse(llmResponse.summary(), fitScore, llmResponse.questions());
+    }
+
+    private String fitScoreSection(FitScore fitScore) {
+        if (fitScore == null) {
+            return "";
+        }
+        StringBuilder section = new StringBuilder("\n\nCOMPUTED FIT SCORE:\n");
+        section.append("Overall fit score: ").append(fitScore.overallScore()).append("/100\n");
+        if (fitScore.yearsOfExperience() != null) {
+            section.append("Years of experience detected in resume: ")
+                    .append(fitScore.yearsOfExperience()).append("\n");
+        }
+        section.append("\nRequirements with strong evidence in the resume:\n")
+                .append(formatRequirements(fitScore.matchedRequirements()));
+        section.append("\nRequirements with weak or no evidence in the resume:\n")
+                .append(formatRequirements(fitScore.missingRequirements()));
+        return section.toString();
+    }
+
+    private String formatRequirements(List<RequirementMatch> requirements) {
+        if (requirements == null || requirements.isEmpty()) {
+            return "(none)\n";
+        }
+        StringBuilder text = new StringBuilder();
+        for (RequirementMatch requirement : requirements) {
+            text.append("- \"").append(requirement.requirement()).append("\" (similarity ")
+                    .append(requirement.similarity()).append(")\n");
+        }
+        return text.toString();
     }
 
     private String callGroq(String userPrompt) {
